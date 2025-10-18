@@ -1,0 +1,9 @@
+# Lingkungan virtual & cache
+.env
+.venv
+venv/
+__pycache__/
+
+# File spesifik OS
+.DS_Store
+Thumbs.db
