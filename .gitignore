@@ -4,6 +4,10 @@
 venv/
 __pycache__/
 
+# Folder data & indeks LangChain
+faiss_index/
+data/
+
 # File spesifik OS
 .DS_Store
 Thumbs.db

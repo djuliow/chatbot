@@ -1,13 +1,14 @@
 /* Import Font */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
-/* Variabel Warna Utama */
+/* Variabel Warna & Gaya Utama */
 :root {
     --cyber-green: #00FFD1;
     --dark-bg: #121212;
     --dark-primary: #1E1E1E;
     --dark-secondary: #2A2A2A;
     --text-color: #EAEAEA;
+    --glow-shadow: 0 0 15px 2px rgba(0, 255, 209, 0.4);
 }
 
 /* Body & Font Utama */
@@ -19,9 +20,10 @@ body, .stApp {
 
 /* Header Utama */
 h1 {
-    font-size: 2.5rem !important;
+    font-size: 2.8rem !important;
     color: var(--text-color) !important;
-    text-shadow: 0 0 10px rgba(0, 255, 209, 0.5);
+    text-shadow: var(--glow-shadow);
+    text-align: center;
 }
 
 /* Sub-header */
@@ -29,6 +31,8 @@ h1 {
     color: var(--cyber-green) !important;
     font-size: 1rem !important;
     text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 2px;
 }
 
 /* Sidebar */
@@ -39,7 +43,7 @@ h1 {
 
 /* Animasi Fade-in untuk pesan baru */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -47,15 +51,62 @@ h1 {
 [data-testid="stChatMessage"] .st-emotion-cache-1c7y2kd {
     border-radius: 10px;
     padding: 1rem;
-    background: rgba(42, 42, 42, 0.6);
-    backdrop-filter: blur(5px);
+    background: rgba(42, 42, 42, 0.65);
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.6s ease-out;
 }
 
 /* Bubble Chat User (Kanan) */
 div[data-testid="stChatMessage"]:has(div[data-testid="stAvatarIcon-user"]) .st-emotion-cache-1c7y2kd {
     background: linear-gradient(135deg, #004236, #006F5A);
-    box-shadow: 0 0 12px 1px rgba(0, 255, 209, 0.25);
-    border-color: rgba(0, 255, 209, 0.3);
+    box-shadow: 0 0 12px 1px rgba(0, 255, 209, 0.4);
+    border-color: rgba(0, 255, 209, 0.4);
+}
+
+/* --- PERBAIKAN PERATAAN CHAT v2 --- */
+
+/* Batasi lebar maksimum bubble agar tidak terlalu panjang */
+[data-testid="stChatMessage"] .st-emotion-cache-1c7y2kd {
+    max-width: 80%;
+}
+
+/* Paksa bubble user untuk rata ke kanan dengan margin */
+div[data-testid="stChatMessage"]:has(div[data-testid="stAvatarIcon-user"]) {
+    width: auto;
+    margin-left: auto;
+}
+
+/* Pastikan bubble bot tetap rata ke kiri dengan margin */
+div[data-testid="stChatMessage"]:has(div[data-testid="stAvatarIcon-assistant"]) {
+    width: auto;
+    margin-right: auto;
+}
+
+
+/* Tombol */
+.stButton > button {
+    border-radius: 8px;
+    border: 1px solid var(--cyber-green);
+    color: var(--cyber-green);
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+.stButton > button:hover {
+    background-color: var(--cyber-green);
+    color: var(--dark-primary);
+    box-shadow: var(--glow-shadow);
+    border-color: var(--cyber-green);
+}
+
+/* Efek ketikan kursor */
+.typing-cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2rem;
+    background-color: var(--cyber-green);
+    animation: blink 0.7s infinite;
+}
+@keyframes blink {
+    50% { opacity: 0; }
 }
