@@ -10,7 +10,7 @@ def render_sidebar():
     """Merender semua komponen di sidebar dan mengembalikan nilainya."""
     with st.sidebar:
         st.header("🧭 Kontrol & Mode")
-        mode = st.radio("🕹️ Mode Interaksi:", ("Chat Biasa", "Mode Edukasi", "Mode Quiz Interaktif"))
+        mode = st.radio("🕹️ Mode Interaksi:", ("Chat Biasa", "Mode Quiz Interaktif"))
         
         st.divider()
         

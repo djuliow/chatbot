@@ -13,14 +13,15 @@ def load_css(file_name):
         st.error(f"File CSS '{file_name}' tidak ditemukan.")
 
 def type_effect(text):
-    """Menampilkan teks dengan efek ketikan."""
+    """Menampilkan teks dengan efek ketikan per karakter untuk menjaga format."""
     container = st.empty()
-    full_text = ""
-    for chunk in text.split():
-        full_text += chunk + " "
-        container.markdown(full_text + "<span class='typing-cursor'></span>", unsafe_allow_html=True)
-        time.sleep(0.03)
-    container.markdown(full_text, unsafe_allow_html=True)
+    displayed_text = ""
+    for char in text:
+        displayed_text += char
+        container.markdown(displayed_text + "<span class='typing-cursor'></span>", unsafe_allow_html=True)
+        time.sleep(0.01) # Waktu jeda yang sangat singkat
+    # Tampilkan teks final tanpa kursor
+    container.markdown(displayed_text, unsafe_allow_html=True)
 
 def get_pdf_text(pdf_docs):
     """Mengekstrak teks dari daftar file PDF yang diunggah."""

@@ -70,16 +70,55 @@ def _call_groq_raw(prompt):
 
 # Fungsi generate_quiz dan evaluate_quiz di-refactor untuk menggunakan _call_groq_raw atau chain utama
 def generate_quiz_question(topic):
+    """Membuat kuis dengan mengambil konteks relevan dari vector store secara manual."""
     context_instruction = ""
+    # Jika ada dokumen, lakukan pencarian manual untuk mendapatkan konteks
     if st.session_state.doc_info.get("count", 0) > 0:
-        context_instruction = f"Berdasarkan konteks dari dokumen yang diunggah. "
-    prompt = f'{context_instruction}Buat satu pertanyaan kuis tentang "{topic}". Berikan dalam format JSON dengan key "question", "options", dan "correct_answer".'
+        try:
+            embeddings = HuggingFaceEmbeddings(model_name="hkunlp/instructor-large")
+            vector_store = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
+            retriever = vector_store.as_retriever(search_kwargs={"k": 3}) # Ambil 3 potongan paling relevan
+            retrieved_docs = retriever.get_relevant_documents(topic)
+            
+            if retrieved_docs:
+                context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
+                context_instruction = f"Berdasarkan konteks berikut:\n---\n{context_text}\n---\n"
+        except Exception as e:
+            return f"Gagal mengambil konteks dari dokumen: {e}"
+
+    prompt = f'''{context_instruction}
+Buat satu pertanyaan kuis pilihan ganda tentang "{topic}".
+
+PENTING:
+1. Pertanyaan harus memiliki SATU jawaban yang paling tepat dan tidak ambigu.
+2. Tiga pilihan lainnya harus menjadi pengecoh (distractor) yang jelas salah.
+3. Berikan dalam format JSON dengan key "question", "options" (sebuah dictionary dengan key "A", "B", "C", "D"), dan "correct_answer".
+4. Nilai dari "correct_answer" HARUS berupa salah satu dari huruf "A", "B", "C", atau "D".
+
+Contoh format JSON:
+{{
+  "question": "Apa warna langit?",
+  "options": {{
+    "A": "Biru",
+    "B": "Hijau",
+    "C": "Merah",
+    "D": "Kuning"
+  }},
+  "correct_answer": "A"
+}}
+'''
     raw_response = _call_groq_raw(prompt)
     if "API_ERROR" in raw_response: return f"Gagal menghubungi API: {raw_response}"
     try:
-        json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-        if not json_match: return f"Gagal membuat kuis (model tidak memberikan format JSON)."
-        json_response = json.loads(json_match.group(0))
+        # Perbaikan: Gunakan find dan rfind untuk ekstraksi JSON yang lebih kuat
+        start_index = raw_response.find('{')
+        end_index = raw_response.rfind('}') + 1
+        
+        if start_index == -1 or end_index == 0:
+            return f"Gagal membuat kuis (model tidak memberikan format JSON)."
+
+        json_str = raw_response[start_index:end_index]
+        json_response = json.loads(json_str)
         options = json_response.get("options", {})
         options_str = ""
         if isinstance(options, dict): options_str = "\n\n".join([f"{k}. {v}" for k, v in options.items()])
@@ -90,10 +129,10 @@ def generate_quiz_question(topic):
         return f"Gagal memproses format kuis. Error: {e}"
 
 def evaluate_quiz_answer(user_answer):
+    """Mengevaluasi jawaban kuis menggunakan panggilan API langsung untuk output yang lebih pasti."""
     quiz = st.session_state.quiz_state
     eval_prompt = f'Tugas: Evaluasi jawaban kuis. Abaikan huruf besar/kecil. Pertanyaan: "{quiz["question"]}". Jawaban benar: "{quiz["answer"]}". Jawaban pengguna: "{user_answer}". Mulai respons Anda HANYA dengan [BENAR] atau [SALAH], lalu berikan penjelasan singkat.'
     st.session_state.quiz_state["is_pending"] = False
-    if st.session_state.conversation:
-        return st.session_state.conversation({"question": eval_prompt})["answer"]
-    else:
-        return "Sesi percakapan belum dimulai. Silakan proses dokumen terlebih dahulu."
+    # Gunakan panggilan langsung untuk memastikan format [BENAR]/[SALAH] tidak terganggu oleh template chain
+    full_prompt_for_eval = PERSONA + eval_prompt
+    return _call_groq_raw(full_prompt_for_eval)
